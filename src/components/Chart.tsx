@@ -425,7 +425,7 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
                 {/* Crosshair Price Change Info - Optimized for Mobile */}
                 {/* On mobile: Top bar overlay. On desktop: Floating box. */}
                 {crosshairInfo && (
-                    <div className="absolute top-0 left-0 right-0 sm:top-4 sm:left-auto sm:right-4 sm:w-auto p-2 sm:p-0 z-20 pointer-events-none">
+                    <div className="absolute top-0 left-0 right-0 sm:top-4 sm:left-auto sm:right-4 sm:w-auto p-2 sm:p-0 z-50 pointer-events-none">
                         <div className="glass glass-border rounded-lg p-2 sm:p-3 shadow-lg flex sm:block items-center justify-between sm:justify-start gap-4">
 
                             {/* Mobile visual hierarchy: Change % is king */}
