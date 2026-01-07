@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
                 response.headers.set("X-Data-Source", base.includes(".us") ? "BinanceUS" : "Binance");
                 return response;
             }
-        } catch (error) {
+        } catch {
             // console.error(`Failed to fetch klines from ${base}:`, error);
         }
     }

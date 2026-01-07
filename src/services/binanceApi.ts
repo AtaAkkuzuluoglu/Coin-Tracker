@@ -134,7 +134,6 @@ export async function fetchAllTickers(
     const tickerMap = new Map<string, TickerData>();
 
     // Separate assets by source
-    const binanceAssets = assetList.filter((a) => a.source === "binance");
     const hyperliquidAssets = assetList.filter((a) => a.source === "hyperliquid");
 
     // Unified Hyperliquid Fetch (All assets are now on HL)

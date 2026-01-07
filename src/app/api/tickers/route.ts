@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
                     return NextResponse.json(data);
                 }
             }
-        } catch (error) {
+        } catch {
             // console.error(`Failed to fetch from ${endpoint}:`, error);
         }
     }

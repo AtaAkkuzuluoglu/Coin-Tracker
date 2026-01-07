@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 const HYPERLIQUID_API = "https://api.hyperliquid.xyz/info";
 
@@ -30,7 +30,7 @@ export async function GET() {
         // Map universe to find tokens
         const universe = spotMeta.universe; // [{name: "HYPE/USDC", tokens: [...]}, ...]
 
-        const tickers = universe.map((u: any, index: number) => {
+        const tickers = universe.map((u: { name: string }, index: number) => {
             const ctx = assetCtxs[index];
             if (!ctx) return null;
 
