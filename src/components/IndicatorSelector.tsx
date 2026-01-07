@@ -65,8 +65,7 @@ export default function IndicatorSelector({
                         }`}
                 >
                     <Activity className="w-4 h-4" />
-                    <span className="hidden sm:inline">Indicators</span>
-                    <span className="sm:hidden">Ind</span>
+                    <span className="inline">Indicators</span>
                     {activeCount > 0 && (
                         <span className="px-1.5 py-0.5 text-xs rounded-full bg-purple-500/30 text-purple-300">
                             {activeCount}
