@@ -71,7 +71,23 @@ export async function GET(request: NextRequest) {
         console.error("Hyperliquid fallback failed:", e);
     }
 
-    console.warn("Binance and Hyperliquid endpoints failed, falling back to CoinGecko");
+    // Fallback: Coinbase (Very reliable for major assets like AAVE, BTC, ETH)
+    try {
+        const asset = assets.find(a => a.symbol === symbol);
+        // Coinbase usually uses Ticker-USD (e.g. AAVE-USD)
+        const cbCoin = asset ? `${asset.ticker}-USD` : symbol?.replace("USDT", "-USD").replace("USD", "-USD"); // simple heuristic
+
+        if (cbCoin) {
+            const cbData = await fetchCoinbaseKlines(cbCoin, interval, limit);
+            if (cbData && cbData.length > 0) {
+                return NextResponse.json(cbData);
+            }
+        }
+    } catch (e) {
+        console.error("Coinbase fallback failed:", e);
+    }
+
+    console.warn("All primary endpoints failed, falling back to CoinGecko");
 
     // Fallback: CoinGecko OHLC
     // Map symbol to CG ID
@@ -201,6 +217,77 @@ async function fetchHyperliquidKlines(coin: string, interval: string, limit: str
         ]);
     } catch (e) {
         console.error("Error fetching HL klines:", e);
+        return null;
+    }
+}
+
+async function fetchCoinbaseKlines(product: string, interval: string, limit: string | null) {
+    // Map Binance interval to Coinbase Granularity (seconds)
+    // Supported: 60, 300, 900, 3600, 21600, 86400
+    const granularityMap: Record<string, number> = {
+        "1m": 60,
+        "5m": 300,
+        "15m": 900,
+        "1h": 3600,
+        "6h": 21600,
+        "1d": 86400,
+        "1w": 86400, // No weekly, fallback to daily
+        "1M": 86400, // No monthly, fallback to daily
+    };
+
+    const granularity = granularityMap[interval] || 86400; // Default to daily if unknown
+
+    try {
+        const url = new URL(`https://api.exchange.coinbase.com/products/${product}/candles`);
+        url.searchParams.set("granularity", granularity.toString());
+        // Coinbase returns latest candles by default
+
+        const response = await fetch(url.toString(), {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (compatible; CoinTracker/1.0)",
+                "Accept": "application/json"
+            },
+            next: { revalidate: 10 }
+        });
+
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        if (!Array.isArray(data)) return null;
+
+        // Limit results
+        let results = data;
+        if (limit) {
+            const limitNum = parseInt(limit);
+            if (results.length > limitNum) {
+                // Coinbase returns newest first? verify. Yes: [ [ time, low, high, open, close, volume ], ... ]	
+                // Actually usually descending time.
+                results = results.slice(0, limitNum);
+            }
+        }
+
+        // Transform to Binance format
+        // Coinbase: [ time, low, high, open, close, volume ] -> Verify this order!
+        // Docs: [ time, low, high, open, close, volume ]
+        // Binance: [time, open, high, low, close, volume, ...]
+
+        // Reverse to ascending time for the chart if Coinbase gives descending
+        // Lightweight charts expects ascending.
+        results.sort((a: number[], b: number[]) => a[0] - b[0]);
+
+        return results.map((c: number[]) => [
+            c[0] * 1000,        // Time (CB is seconds, Binance wants ms)
+            c[3].toString(),    // Open
+            c[2].toString(),    // High
+            c[1].toString(),    // Low
+            c[4].toString(),    // Close
+            c[5].toString(),    // Volume
+            (c[0] + granularity) * 1000, // Close time
+            "0", 0, "0", "0", "0"
+        ]);
+
+    } catch (e) {
+        console.error("Error fetching Coinbase klines:", e);
         return null;
     }
 }
