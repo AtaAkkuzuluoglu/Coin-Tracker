@@ -2,65 +2,112 @@ import { NextResponse } from "next/server";
 
 const HYPERLIQUID_API = "https://api.hyperliquid.xyz/info";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     try {
-        // Fetch spot metadata and context (prices, stats)
-        const response = await fetch(HYPERLIQUID_API, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ type: "spotMetaAndAssetCtxs" }),
-            next: { revalidate: 5 }
-        });
+        // Fetch BOTH Perps and Spot metadata in parallel to cover all assets
+        // Perps: BTC, ETH, SOL, etc.
+        // Spot: HYPE, PURR, etc.
+        const [perpRes, spotRes] = await Promise.all([
+            fetch(HYPERLIQUID_API, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: "metaAndAssetCtxs" }),
+                next: { revalidate: 5 }
+            }),
+            fetch(HYPERLIQUID_API, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: "spotMetaAndAssetCtxs" }),
+                next: { revalidate: 5 }
+            })
+        ]);
 
-        if (!response.ok) {
-            throw new Error(`Hyperliquid API error: ${response.status}`);
-        }
+        const tickers: any[] = [];
 
-        const data = await response.json();
-        // data[0] is spotMeta (universe, tokens)
-        // data[1] is assetCtxs (state, stats)
+        // --- Process Perps Data ---
+        if (perpRes.ok) {
+            const perpData = await perpRes.json();
+            // perpData[0] is Object { universe: [...] }
+            // perpData[1] is assetCtxs (array of context objects)
+            const universe = perpData[0].universe;
+            const assetCtxs = perpData[1];
 
-        const spotMeta = data[0];
-        const assetCtxs = data[1];
+            if (universe && assetCtxs) {
+                universe.forEach((u: { name: string }, index: number) => {
+                    const ctx = assetCtxs[index];
+                    if (!ctx) return;
 
-        if (!spotMeta || !assetCtxs) {
-            throw new Error("Invalid data format from Hyperliquid");
-        }
+                    const price = parseFloat(ctx.midPx || ctx.markPx || "0");
+                    const prevDayPx = parseFloat(ctx.prevDayPx || "0");
+                    const volume24h = parseFloat(ctx.dayNtlVlm || "0");
 
-        // Map universe to find tokens
-        const universe = spotMeta.universe; // [{name: "HYPE/USDC", tokens: [...]}, ...]
+                    let priceChange24h = 0;
+                    let priceChangePercent = 0;
 
-        const tickers = universe.map((u: { name: string }, index: number) => {
-            const ctx = assetCtxs[index];
-            if (!ctx) return null;
+                    if (prevDayPx > 0) {
+                        priceChange24h = price - prevDayPx;
+                        priceChangePercent = ((price - prevDayPx) / prevDayPx) * 100;
+                    }
 
-            // Name is like "BTC/USDC" or "HYPE/USDC" or "PURR/USDC"
-            // We want just "BTC", "HYPE"
-            const symbol = u.name.split("/")[0];
-
-            const price = parseFloat(ctx.midPx || ctx.markPx || "0");
-            const prevDayPx = parseFloat(ctx.prevDayPx || "0");
-            const volume24h = parseFloat(ctx.dayNtlVlm || "0");
-
-            let priceChange24h = 0;
-            let priceChangePercent = 0;
-
-            if (prevDayPx > 0) {
-                priceChange24h = price - prevDayPx;
-                priceChangePercent = ((price - prevDayPx) / prevDayPx) * 100;
+                    tickers.push({
+                        symbol: u.name, // "BTC", "ETH"
+                        price,
+                        priceChange24h,
+                        priceChangePercent,
+                        volume24h,
+                        source: "hyperliquid-perp"
+                    });
+                });
             }
+        }
 
-            return {
-                symbol: symbol, // e.g. "BTC"
-                price,
-                priceChange24h,
-                priceChangePercent,
-                volume24h,
-                source: "hyperliquid"
-            };
-        }).filter(Boolean);
+        // --- Process Spot Data ---
+        if (spotRes.ok) {
+            const spotData = await spotRes.json();
+            // spotData[0] is spotMeta containing universe
+            // spotData[1] is spotAssetCtxs
+            const spotMeta = spotData[0];
+            const assetCtxs = spotData[1];
 
-        // Also ensure we cover HYPE if it wasn't in universe (it usually is)
+            if (spotMeta && spotMeta.universe && assetCtxs) {
+                spotMeta.universe.forEach((u: { name: string }, index: number) => {
+                    const ctx = assetCtxs[index];
+                    if (!ctx) return;
+
+                    // Spot names are like "HYPE/USDC". We want "HYPE".
+                    // Filter out internal IDs starting with @ unless requested
+                    if (u.name.startsWith("@")) return;
+
+                    const symbol = u.name.split("/")[0];
+
+                    // Avoid duplicates if asset exists in Perps (Perps usually have more liquidity/relevance for price)
+                    if (tickers.find(t => t.symbol === symbol)) return;
+
+                    const price = parseFloat(ctx.midPx || ctx.markPx || "0");
+                    const prevDayPx = parseFloat(ctx.prevDayPx || "0");
+                    const volume24h = parseFloat(ctx.dayNtlVlm || "0");
+
+                    let priceChange24h = 0;
+                    let priceChangePercent = 0;
+
+                    if (prevDayPx > 0) {
+                        priceChange24h = price - prevDayPx;
+                        priceChangePercent = ((price - prevDayPx) / prevDayPx) * 100;
+                    }
+
+                    tickers.push({
+                        symbol: symbol,
+                        price,
+                        priceChange24h,
+                        priceChangePercent,
+                        volume24h,
+                        source: "hyperliquid-spot"
+                    });
+                });
+            }
+        }
 
         return NextResponse.json(tickers);
 
