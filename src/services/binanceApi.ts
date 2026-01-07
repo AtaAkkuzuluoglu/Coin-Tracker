@@ -49,11 +49,6 @@ export async function fetchCandlestickData(
     asset: Asset,
     timeframe: Timeframe
 ): Promise<CandlestickData[]> {
-    // For Hyperliquid assets, use CoinGecko for historical data
-    if (asset.source === "hyperliquid") {
-        return fetchCoinGeckoChartData(asset, timeframe);
-    }
-
     const interval = timeframeToInterval[timeframe];
     const limit = timeframeToLimit[timeframe];
 
