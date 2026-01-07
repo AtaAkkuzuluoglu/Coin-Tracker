@@ -4,6 +4,7 @@ import { assets } from "@/lib/assets";
 const BINANCE_API_BASE = "https://api.binance.com";
 const BINANCE_US_API_BASE = "https://api.binance.us";
 const COINGECKO_API_BASE = "https://api.coingecko.com/api/v3";
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
@@ -263,6 +264,9 @@ async function fetchCoinbaseKlines(product: string, interval: string, limit: str
     const granularity = granularityMap[interval] || 86400; // Default to daily if unknown
 
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2500);
+
         const url = new URL(`https://api.exchange.coinbase.com/products/${product}/candles`);
         url.searchParams.set("granularity", granularity.toString());
         // Coinbase returns latest candles by default
@@ -272,8 +276,10 @@ async function fetchCoinbaseKlines(product: string, interval: string, limit: str
                 "User-Agent": "Mozilla/5.0 (compatible; CoinTracker/1.0)",
                 "Accept": "application/json"
             },
+            signal: controller.signal,
             next: { revalidate: 10 }
         });
+        clearTimeout(timeoutId);
 
         if (!response.ok) return null;
 
