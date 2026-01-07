@@ -71,6 +71,30 @@ export async function GET(request: NextRequest) {
         }
     }
 
+    // Fallback: MEXC (Good reliable fallback for standard pairs like AAVEUSDT)
+    try {
+        const mexcUrl = new URL("https://api.mexc.com/api/v3/klines");
+        mexcUrl.searchParams.set("symbol", symbol);
+        mexcUrl.searchParams.set("interval", interval);
+        if (limit) mexcUrl.searchParams.set("limit", limit);
+
+        const res = await fetchWithTimeout(mexcUrl.toString(), {
+            headers: { "Accept": "application/json" },
+            next: { revalidate: 10 },
+        }, 3000); // 3s timeout for MEXC
+
+        if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+                const response = NextResponse.json(data);
+                response.headers.set("X-Data-Source", "MEXC");
+                return response;
+            }
+        }
+    } catch (error) {
+        console.error("MEXC fallback failed:", error);
+    }
+
     // Fallback: Hyperliquid
     // If Binance fails, try Hyperliquid (good for ONDO, HYPE, wrappers)
     try {
