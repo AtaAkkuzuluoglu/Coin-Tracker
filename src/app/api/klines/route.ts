@@ -71,6 +71,24 @@ export async function GET(request: NextRequest) {
         }
     }
 
+    // Fallback: Coinbase (Very reliable for major assets like AAVE, BTC, ETH)
+    try {
+        const asset = assets.find(a => a.symbol === symbol);
+        // Coinbase usually uses Ticker-USD (e.g. AAVE-USD)
+        const cbCoin = asset ? `${asset.ticker}-USD` : symbol?.replace("USDT", "-USD").replace("USD", "-USD"); // simple heuristic
+
+        if (cbCoin) {
+            const cbData = await fetchCoinbaseKlines(cbCoin, interval, limit);
+            if (cbData && cbData.length > 0) {
+                const response = NextResponse.json(cbData);
+                response.headers.set("X-Data-Source", "Coinbase");
+                return response;
+            }
+        }
+    } catch (e) {
+        console.error("Coinbase fallback failed:", e);
+    }
+
     // Fallback: MEXC (Good reliable fallback for standard pairs like AAVEUSDT)
     try {
         const mexcUrl = new URL("https://api.mexc.com/api/v3/klines");
