@@ -18,6 +18,20 @@ export async function GET(request: NextRequest) {
         );
     }
 
+    // Helper: Fetch with timeout to prevent Vercel execution limit (10s) from killing the chain
+    const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 2500) => {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        try {
+            const res = await fetch(url, { ...options, signal: controller.signal });
+            clearTimeout(id);
+            return res;
+        } catch (e) {
+            clearTimeout(id);
+            throw e;
+        }
+    };
+
     // Try main Binance API first, then fallback to Binance US
     const bases = [BINANCE_API_BASE, BINANCE_US_API_BASE];
 
@@ -30,7 +44,7 @@ export async function GET(request: NextRequest) {
                 url.searchParams.set("interval", interval);
                 if (limit) url.searchParams.set("limit", limit);
 
-                const res = await fetch(url.toString(), {
+                const res = await fetchWithTimeout(url.toString(), {
                     headers: { "Accept": "application/json" },
                     next: { revalidate: 10 },
                 });
@@ -47,7 +61,9 @@ export async function GET(request: NextRequest) {
             }
 
             if (Array.isArray(data) && data.length > 0) {
-                return NextResponse.json(data);
+                const response = NextResponse.json(data);
+                response.headers.set("X-Data-Source", base.includes(".us") ? "BinanceUS" : "Binance");
+                return response;
             }
         } catch (error) {
             console.error(`Failed to fetch klines from ${base}:`, error);
@@ -64,7 +80,9 @@ export async function GET(request: NextRequest) {
         if (hlCoin) {
             const hlData = await fetchHyperliquidKlines(hlCoin, interval, limit);
             if (hlData && hlData.length > 0) {
-                return NextResponse.json(hlData);
+                const response = NextResponse.json(hlData);
+                response.headers.set("X-Data-Source", "Hyperliquid");
+                return response;
             }
         }
     } catch (e) {
@@ -80,7 +98,9 @@ export async function GET(request: NextRequest) {
         if (cbCoin) {
             const cbData = await fetchCoinbaseKlines(cbCoin, interval, limit);
             if (cbData && cbData.length > 0) {
-                return NextResponse.json(cbData);
+                const response = NextResponse.json(cbData);
+                response.headers.set("X-Data-Source", "Coinbase");
+                return response;
             }
         }
     } catch (e) {
@@ -168,6 +188,9 @@ async function fetchHyperliquidKlines(coin: string, interval: string, limit: str
     // HL returns snapshot of recent candles.
 
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2500);
+
         const response = await fetch("https://api.hyperliquid.xyz/info", {
             method: "POST",
             headers: {
@@ -182,8 +205,10 @@ async function fetchHyperliquidKlines(coin: string, interval: string, limit: str
                     startTime: 0 // 0 means latest N candles usually, or we can calculate
                 }
             }),
+            signal: controller.signal,
             next: { revalidate: 10 }
         });
+        clearTimeout(timeoutId);
 
         if (!response.ok) return null;
 
