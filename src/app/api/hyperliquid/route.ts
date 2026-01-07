@@ -4,6 +4,15 @@ const HYPERLIQUID_API = "https://api.hyperliquid.xyz/info";
 
 export const dynamic = 'force-dynamic';
 
+interface Ticker {
+    symbol: string;
+    price: number;
+    priceChange24h: number;
+    priceChangePercent: number;
+    volume24h: number;
+    source: string;
+}
+
 export async function GET() {
     try {
         // Fetch BOTH Perps and Spot metadata in parallel to cover all assets
@@ -24,7 +33,7 @@ export async function GET() {
             })
         ]);
 
-        const tickers: any[] = [];
+        const tickers: Ticker[] = [];
 
         // --- Process Perps Data ---
         if (perpRes.ok) {
