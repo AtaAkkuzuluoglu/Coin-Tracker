@@ -51,7 +51,7 @@ export default function Home() {
   const currentTicker = tickerData.get(selectedAsset.id);
 
   return (
-    <div className="h-screen flex overflow-hidden bg-slate-950 dark:bg-slate-950 light:bg-slate-100">
+    <div className="h-screen h-dvh flex overflow-hidden bg-slate-950 dark:bg-slate-950 light:bg-slate-100">
       {/* Sidebar */}
       <Sidebar
         selectedAsset={selectedAsset}
@@ -73,20 +73,20 @@ export default function Home() {
         {/* Chart Area */}
         <div className="flex-1 glass glass-border rounded-xl overflow-hidden flex flex-col">
           {/* Toolbar */}
-          <div className="flex items-center justify-between p-4 border-b border-slate-700/50 dark:border-slate-700/50 flex-wrap gap-3">
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-slate-400 dark:text-slate-400">Candlestick</span>
-              <span className="text-xs px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20">
+          <div className="flex items-center justify-between p-4 border-b border-slate-700/50 dark:border-slate-700/50 gap-3 overflow-x-auto no-scrollbar min-h-[60px]">
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-sm text-slate-400 dark:text-slate-400 hidden sm:inline">Candlestick</span>
+              <span className="text-xs px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20 whitespace-nowrap">
                 LIVE
               </span>
               {lastUpdated && (
-                <span className="text-xs text-slate-500 hidden sm:block">
+                <span className="text-xs text-slate-500 hidden md:block">
                   Updated: {lastUpdated.toLocaleTimeString()}
                 </span>
               )}
               <button
                 onClick={handleRefresh}
-                className="p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors shrink-0"
                 title="Refresh data"
               >
                 <RefreshCw
@@ -95,7 +95,7 @@ export default function Home() {
               </button>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 shrink-0">
               {/* Indicator Selector */}
               <IndicatorSelector
                 activeIndicators={activeIndicators}
@@ -105,7 +105,7 @@ export default function Home() {
               {/* News Button */}
               <button
                 onClick={() => setNewsOpen(true)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 border border-slate-700/50 transition-all"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 border border-slate-700/50 transition-all shrink-0"
               >
                 <Newspaper className="w-4 h-4" />
                 <span className="hidden sm:inline">News</span>
