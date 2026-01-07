@@ -1,15 +1,10 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { Asset, assets } from "@/lib/assets";
-import {
-  Timeframe,
-  CandlestickData,
-  TickerData,
-  fetchCandlestickData,
-  fetchAllTickers,
-} from "@/lib/binanceApi";
+import { Timeframe } from "@/services/binanceApi";
 import { ActiveIndicators, defaultIndicators, IndicatorType } from "@/lib/indicators";
+import { useChartData, useTickers } from "@/hooks";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Chart from "@/components/Chart";
@@ -28,43 +23,9 @@ export default function Home() {
   // Technical indicators state
   const [activeIndicators, setActiveIndicators] = useState<ActiveIndicators>(defaultIndicators);
 
-  // Real-time data state
-  const [chartData, setChartData] = useState<CandlestickData[]>([]);
-  const [tickerData, setTickerData] = useState<Map<string, TickerData>>(new Map());
-  const [isLoading, setIsLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-
-  // Fetch all tickers for sidebar
-  const fetchTickers = useCallback(async () => {
-    const tickers = await fetchAllTickers(assets);
-    setTickerData(tickers);
-  }, []);
-
-  // Fetch chart data for selected asset
-  const fetchChart = useCallback(async () => {
-    setIsLoading(true);
-    const data = await fetchCandlestickData(selectedAsset, timeframe);
-    setChartData(data);
-    setIsLoading(false);
-    setLastUpdated(new Date());
-  }, [selectedAsset, timeframe]);
-
-  // Initial load and refresh interval
-  useEffect(() => {
-    fetchTickers();
-    fetchChart();
-
-    // Refresh tickers every 10 seconds
-    const tickerInterval = setInterval(fetchTickers, 10000);
-
-    // Refresh chart every 30 seconds
-    const chartInterval = setInterval(fetchChart, 30000);
-
-    return () => {
-      clearInterval(tickerInterval);
-      clearInterval(chartInterval);
-    };
-  }, [fetchTickers, fetchChart]);
+  // Use custom hooks for data fetching
+  const { chartData, isLoading, lastUpdated, refetch: refetchChart } = useChartData(selectedAsset, timeframe);
+  const { tickerData, refetch: refetchTickers } = useTickers(assets);
 
   const handleSelectAsset = (asset: Asset) => {
     setSelectedAsset(asset);
@@ -82,8 +43,8 @@ export default function Home() {
   };
 
   const handleRefresh = () => {
-    fetchTickers();
-    fetchChart();
+    refetchTickers();
+    refetchChart();
   };
 
   // Get current asset's ticker data
