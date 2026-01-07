@@ -20,7 +20,7 @@ export const assets: Asset[] = [
         symbol: "BTCUSDT",
         logo: `${LOGO_CDN}/bitcoin/large.png`,
         color: "#F7931A",
-        source: "binance",
+        source: "hyperliquid",
         coingeckoId: "bitcoin",
     },
     {
@@ -30,7 +30,7 @@ export const assets: Asset[] = [
         symbol: "ETHUSDT",
         logo: `${LOGO_CDN}/ethereum/large.png`,
         color: "#627EEA",
-        source: "binance",
+        source: "hyperliquid",
         coingeckoId: "ethereum",
     },
     {
@@ -40,7 +40,7 @@ export const assets: Asset[] = [
         symbol: "SOLUSDT",
         logo: `${LOGO_CDN}/solana/large.png`,
         color: "#00FFA3",
-        source: "binance",
+        source: "hyperliquid",
         coingeckoId: "solana",
     },
     {
@@ -50,7 +50,7 @@ export const assets: Asset[] = [
         symbol: "AVAXUSDT",
         logo: `${LOGO_CDN}/avalanche-2/large.png`,
         color: "#E84142",
-        source: "binance",
+        source: "hyperliquid",
         coingeckoId: "avalanche-2",
     },
     {
@@ -60,7 +60,7 @@ export const assets: Asset[] = [
         symbol: "AAVEUSDT",
         logo: `${LOGO_CDN}/aave/large.png`,
         color: "#B6509E",
-        source: "binance",
+        source: "hyperliquid",
         coingeckoId: "aave",
     },
     {
@@ -70,7 +70,7 @@ export const assets: Asset[] = [
         symbol: "ONDOUSDT",
         logo: `${LOGO_CDN}/ondo-finance/large.png`,
         color: "#1652F0",
-        source: "binance",
+        source: "hyperliquid",
         coingeckoId: "ondo-finance",
     },
     {
@@ -80,7 +80,7 @@ export const assets: Asset[] = [
         symbol: "TAOUSDT",
         logo: `${LOGO_CDN}/bittensor/large.png`,
         color: "#252525",
-        source: "binance",
+        source: "hyperliquid",
         coingeckoId: "bittensor",
     },
     {
@@ -90,7 +90,7 @@ export const assets: Asset[] = [
         symbol: "XRPUSDT",
         logo: `${LOGO_CDN}/ripple/large.png`,
         color: "#23292F",
-        source: "binance",
+        source: "hyperliquid",
         coingeckoId: "ripple",
     },
     {
@@ -100,7 +100,7 @@ export const assets: Asset[] = [
         symbol: "UNIUSDT",
         logo: `${LOGO_CDN}/uniswap/large.png`,
         color: "#FF007A",
-        source: "binance",
+        source: "hyperliquid",
         coingeckoId: "uniswap",
     },
     {

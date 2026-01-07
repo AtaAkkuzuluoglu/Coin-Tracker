@@ -13,6 +13,17 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "symbols parameter required" }, { status: 400 });
     }
 
+    // Unified Ticker Fetching: Priority Hyperliquid
+    // Only verify Binance/Coinbase if Hyperliquid fails or for specific legacy support
+
+    // Note: With assets switched to 'hyperliquid' source, the frontend primarily calls /api/hyperliquid
+    // This route (/api/tickers) is for Binance-formatted bulk requests.
+    // We can leave this as a proxy for Binance data where explicitly requested,
+    // OR we can make this return Hyperliquid data mapped to Binance format.
+
+    // Leaving as is for now, but enabling Hyperliquid fallback if Binance fails
+    // (Existing code had basic fallback, but we want strong Hyperliquid support)
+
     // Try main Binance API first, then fallback to Binance US
     const binanceEndpoints = [
         `${BINANCE_API_BASE}/api/v3/ticker/24hr?symbols=${symbolsParam}`,
@@ -28,13 +39,12 @@ export async function GET(request: NextRequest) {
 
             if (response.ok) {
                 const data = await response.json();
-                // Binance US might return different format for error or empty list, check if array
                 if (Array.isArray(data) && data.length > 0) {
                     return NextResponse.json(data);
                 }
             }
         } catch (error) {
-            console.error(`Failed to fetch from ${endpoint}:`, error);
+            // console.error(`Failed to fetch from ${endpoint}:`, error);
         }
     }
 

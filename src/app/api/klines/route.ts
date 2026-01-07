@@ -19,6 +19,30 @@ export async function GET(request: NextRequest) {
         );
     }
 
+    // Priority 1: Hyperliquid (User requested primary source)
+    const asset = assets.find(a => a.symbol === symbol || a.ticker === symbol);
+
+    // Determine if we should try Hyperliquid first
+    // Note: User requested ALL tokens use HYPE API.
+    // We check if the asset is configured as hyperliquid OR if we can guess the ticker.
+    const hlCoin = asset ? asset.ticker : symbol?.replace(/USDT$|USD$/, "");
+
+    if (hlCoin) {
+        try {
+            const hlData = await fetchHyperliquidKlines(hlCoin, interval, limit);
+            if (hlData && hlData.length > 0) {
+                const response = NextResponse.json(hlData);
+                response.headers.set("X-Data-Source", "Hyperliquid");
+                return response;
+            }
+        } catch (e) {
+            console.error(`Hyperliquid fetch failed for ${hlCoin}:`, e);
+            // Continue to fallbacks
+        }
+    }
+
+    console.warn("Hyperliquid failed or returned empty, trying fallbacks...");
+
     // Helper: Fetch with timeout to prevent Vercel execution limit (10s) from killing the chain
     const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 2500) => {
         const controller = new AbortController();
@@ -33,47 +57,8 @@ export async function GET(request: NextRequest) {
         }
     };
 
-    // Try main Binance API first, then fallback to Binance US
-    const bases = [BINANCE_API_BASE, BINANCE_US_API_BASE];
-
-    for (const base of bases) {
-        try {
-            // Helper to try fetch
-            const tryFetch = async (sym: string) => {
-                const url = new URL(`${base}/api/v3/klines`);
-                url.searchParams.set("symbol", sym);
-                url.searchParams.set("interval", interval);
-                if (limit) url.searchParams.set("limit", limit);
-
-                const res = await fetchWithTimeout(url.toString(), {
-                    headers: { "Accept": "application/json" },
-                    next: { revalidate: 10 },
-                });
-                return res.ok ? await res.json() : null;
-            };
-
-            // Attempt 1: Original symbol (e.g., ONDOUSDT)
-            let data = await tryFetch(symbol);
-
-            // Attempt 2: If failed, USDT -> USD (common on Binance.US)
-            if (!data && symbol.endsWith("USDT")) {
-                const usdSymbol = symbol.replace("USDT", "USD");
-                data = await tryFetch(usdSymbol);
-            }
-
-            if (Array.isArray(data) && data.length > 0) {
-                const response = NextResponse.json(data);
-                response.headers.set("X-Data-Source", base.includes(".us") ? "BinanceUS" : "Binance");
-                return response;
-            }
-        } catch (error) {
-            console.error(`Failed to fetch klines from ${base}:`, error);
-        }
-    }
-
-    // Fallback: Coinbase (Very reliable for major assets like AAVE, BTC, ETH)
+    // Fallback 1: Coinbase (Reliable)
     try {
-        const asset = assets.find(a => a.symbol === symbol);
         // Coinbase usually uses Ticker-USD (e.g. AAVE-USD)
         const cbCoin = asset ? `${asset.ticker}-USD` : symbol?.replace("USDT", "-USD").replace("USD", "-USD"); // simple heuristic
 
@@ -89,17 +74,17 @@ export async function GET(request: NextRequest) {
         console.error("Coinbase fallback failed:", e);
     }
 
-    // Fallback: MEXC (Good reliable fallback for standard pairs like AAVEUSDT)
+    // Fallback 2: MEXC
     try {
         const mexcUrl = new URL("https://api.mexc.com/api/v3/klines");
-        mexcUrl.searchParams.set("symbol", symbol);
+        mexcUrl.searchParams.set("symbol", symbol); // MEXC uses standard symbols like AAVEUSDT
         mexcUrl.searchParams.set("interval", interval);
         if (limit) mexcUrl.searchParams.set("limit", limit);
 
         const res = await fetchWithTimeout(mexcUrl.toString(), {
             headers: { "Accept": "application/json" },
             next: { revalidate: 10 },
-        }, 3000); // 3s timeout for MEXC
+        }, 3000);
 
         if (res.ok) {
             const data = await res.json();
@@ -113,28 +98,41 @@ export async function GET(request: NextRequest) {
         console.error("MEXC fallback failed:", error);
     }
 
-    // Fallback: Hyperliquid
-    // If Binance fails, try Hyperliquid (good for ONDO, HYPE, wrappers)
-    try {
-        const asset = assets.find(a => a.symbol === symbol);
-        // Use ticker (e.g. "ONDO") not symbol ("ONDOUSDT") for HL
-        const hlCoin = asset ? asset.ticker : symbol?.replace(/USDT$|USD$/, "");
+    // Fallback 3: Binance (Likely blocked on Vercel but kept for local/other envs)
+    const bases = [BINANCE_API_BASE, BINANCE_US_API_BASE];
+    for (const base of bases) {
+        try {
+            const tryFetch = async (sym: string) => {
+                const url = new URL(`${base}/api/v3/klines`);
+                url.searchParams.set("symbol", sym);
+                url.searchParams.set("interval", interval);
+                if (limit) url.searchParams.set("limit", limit);
 
-        if (hlCoin) {
-            const hlData = await fetchHyperliquidKlines(hlCoin, interval, limit);
-            if (hlData && hlData.length > 0) {
-                const response = NextResponse.json(hlData);
-                response.headers.set("X-Data-Source", "Hyperliquid");
+                const res = await fetchWithTimeout(url.toString(), {
+                    headers: { "Accept": "application/json" },
+                    next: { revalidate: 10 },
+                });
+                return res.ok ? await res.json() : null;
+            };
+
+            let data = await tryFetch(symbol);
+            if (!data && symbol.endsWith("USDT")) {
+                const usdSymbol = symbol.replace("USDT", "USD");
+                data = await tryFetch(usdSymbol);
+            }
+
+            if (Array.isArray(data) && data.length > 0) {
+                const response = NextResponse.json(data);
+                response.headers.set("X-Data-Source", base.includes(".us") ? "BinanceUS" : "Binance");
                 return response;
             }
+        } catch (error) {
+            // console.error(`Failed to fetch klines from ${base}:`, error);
         }
-    } catch (e) {
-        console.error("Hyperliquid fallback failed:", e);
     }
 
     // Fallback: Coinbase (Very reliable for major assets like AAVE, BTC, ETH)
     try {
-        const asset = assets.find(a => a.symbol === symbol);
         // Coinbase usually uses Ticker-USD (e.g. AAVE-USD)
         const cbCoin = asset ? `${asset.ticker}-USD` : symbol?.replace("USDT", "-USD").replace("USD", "-USD"); // simple heuristic
 
@@ -154,7 +152,9 @@ export async function GET(request: NextRequest) {
 
     // Fallback: CoinGecko OHLC
     // Map symbol to CG ID
-    const asset = assets.find(a => a.symbol === symbol);
+    // Map symbol to CG ID
+    // asset is already declared in outer scope
+
     if (!asset || !asset.coingeckoId) {
         return NextResponse.json([]);
     }
