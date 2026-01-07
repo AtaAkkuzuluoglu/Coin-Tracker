@@ -458,6 +458,7 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
                                 {/* Mobile Date (shown below/next to price) */}
                                 <div className="sm:hidden text-[10px] text-slate-500 mb-0.5">
                                     {new Date(crosshairInfo.time * 1000).toLocaleString(undefined, {
+                                        year: 'numeric',
                                         month: 'short',
                                         day: 'numeric',
                                         hour: '2-digit',
