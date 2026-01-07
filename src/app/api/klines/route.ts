@@ -23,21 +23,31 @@ export async function GET(request: NextRequest) {
 
     for (const base of bases) {
         try {
-            const url = new URL(`${base}/api/v3/klines`);
-            url.searchParams.set("symbol", symbol);
-            url.searchParams.set("interval", interval);
-            if (limit) url.searchParams.set("limit", limit);
+            // Helper to try fetch
+            const tryFetch = async (sym: string) => {
+                const url = new URL(`${base}/api/v3/klines`);
+                url.searchParams.set("symbol", sym);
+                url.searchParams.set("interval", interval);
+                if (limit) url.searchParams.set("limit", limit);
 
-            const response = await fetch(url.toString(), {
-                headers: { "Accept": "application/json" },
-                next: { revalidate: 10 },
-            });
+                const res = await fetch(url.toString(), {
+                    headers: { "Accept": "application/json" },
+                    next: { revalidate: 10 },
+                });
+                return res.ok ? await res.json() : null;
+            };
 
-            if (response.ok) {
-                const data = await response.json();
-                if (Array.isArray(data) && data.length > 0) {
-                    return NextResponse.json(data);
-                }
+            // Attempt 1: Original symbol (e.g., ONDOUSDT)
+            let data = await tryFetch(symbol);
+
+            // Attempt 2: If failed, USDT -> USD (common on Binance.US)
+            if (!data && symbol.endsWith("USDT")) {
+                const usdSymbol = symbol.replace("USDT", "USD");
+                data = await tryFetch(usdSymbol);
+            }
+
+            if (Array.isArray(data) && data.length > 0) {
+                return NextResponse.json(data);
             }
         } catch (error) {
             console.error(`Failed to fetch klines from ${base}:`, error);
