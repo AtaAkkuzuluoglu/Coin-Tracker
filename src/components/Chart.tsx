@@ -111,8 +111,13 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
             },
             timeScale: {
                 borderColor: gridColor,
+                visible: true,
                 timeVisible: true,
                 secondsVisible: false,
+                ticksVisible: true,
+                borderVisible: true,
+                fixLeftEdge: true,
+                fixRightEdge: true,
             },
             handleScale: {
                 axisPressedMouseMove: true,
