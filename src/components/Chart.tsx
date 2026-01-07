@@ -389,25 +389,25 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
             <div className={`relative flex-1 min-h-[300px] ${activeIndicators.RSI ? "" : ""}`}>
                 <div ref={chartContainerRef} className="absolute inset-0" />
 
-                {/* Watermark */}
-                <div className="absolute top-4 left-4 pointer-events-none">
+                {/* Watermark - Hide on mobile if crosshair active to save space */}
+                <div className={`absolute top-4 left-4 pointer-events-none transition-opacity duration-300 ${crosshairInfo ? "opacity-0 sm:opacity-100" : "opacity-100"}`}>
                     <div className="flex items-center gap-2 opacity-20">
-                        <span className="text-2xl font-bold text-slate-400 dark:text-slate-400">
+                        <span className="text-4xl sm:text-6xl font-black text-slate-400 dark:text-slate-500 select-none">
                             {asset.ticker}
                         </span>
                     </div>
                 </div>
 
-                {/* Indicator Legend */}
+                {/* Indicator Legend - Compact on mobile */}
                 {activeIndicatorLabels.length > 0 && (
-                    <div className="absolute top-4 left-20 flex flex-wrap gap-2 pointer-events-none">
+                    <div className={`absolute top-14 sm:top-16 left-4 right-4 flex flex-wrap gap-1.5 pointer-events-none transition-opacity ${crosshairInfo ? "opacity-20" : "opacity-100"}`}>
                         {activeIndicatorLabels.map((key) => (
                             <span
                                 key={key}
-                                className="px-2 py-0.5 text-xs rounded-full border"
+                                className="px-1.5 py-0.5 text-[10px] sm:text-xs font-medium rounded-md border backdrop-blur-sm"
                                 style={{
-                                    backgroundColor: `${indicatorColors[key as keyof typeof indicatorColors]}20`,
-                                    borderColor: `${indicatorColors[key as keyof typeof indicatorColors]}50`,
+                                    backgroundColor: `${indicatorColors[key as keyof typeof indicatorColors]}10`,
+                                    borderColor: `${indicatorColors[key as keyof typeof indicatorColors]}30`,
                                     color: indicatorColors[key as keyof typeof indicatorColors],
                                 }}
                             >
@@ -417,35 +417,46 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
                     </div>
                 )}
 
-                {/* Crosshair Price Change Info */}
+                {/* Crosshair Price Change Info - Optimized for Mobile */}
+                {/* On mobile: Top bar overlay. On desktop: Floating box. */}
                 {crosshairInfo && (
-                    <div className="absolute top-4 right-4 glass glass-border rounded-lg p-3 pointer-events-none">
-                        <div className="text-xs text-slate-400 mb-1">From Hover to Now</div>
-                        <div className="flex items-center gap-2">
-                            {isPositiveChange ? (
-                                <TrendingUp className="w-4 h-4 text-emerald-400" />
-                            ) : (
-                                <TrendingDown className="w-4 h-4 text-rose-500" />
-                            )}
-                            <span
-                                className={`font-mono-numbers text-lg font-bold ${isPositiveChange ? "text-emerald-400" : "text-rose-500"
-                                    }`}
-                            >
-                                {formatChange(crosshairInfo.priceChangePercent)}
-                            </span>
-                        </div>
-                        <div className="text-xs text-slate-500 mt-1">
-                            <span className="text-slate-400">${formatPrice(crosshairInfo.price)}</span>
-                            <span className="mx-1">→</span>
-                            <span className="text-slate-300">${formatPrice(currentPrice)}</span>
+                    <div className="absolute top-0 left-0 right-0 sm:top-4 sm:left-auto sm:right-4 sm:w-auto p-2 sm:p-0 z-20 pointer-events-none">
+                        <div className="glass glass-border rounded-lg p-2 sm:p-3 shadow-lg flex sm:block items-center justify-between sm:justify-start gap-4">
+
+                            {/* Mobile visual hierarchy: Change % is king */}
+                            <div className="flex items-center gap-2">
+                                {isPositiveChange ? (
+                                    <TrendingUp className="w-5 h-5 text-emerald-400" />
+                                ) : (
+                                    <TrendingDown className="w-5 h-5 text-rose-500" />
+                                )}
+                                <span
+                                    className={`font-mono-numbers text-xl sm:text-lg font-bold ${isPositiveChange ? "text-emerald-400" : "text-rose-500"
+                                        }`}
+                                >
+                                    {formatChange(crosshairInfo.priceChangePercent)}
+                                </span>
+                            </div>
+
+                            {/* Prices */}
+                            <div className="flex flex-col sm:block text-right sm:text-left">
+                                <div className="text-[10px] text-slate-400 uppercase tracking-wider hidden sm:block mb-1">From Hover</div>
+                                <div className="text-xs sm:text-sm text-slate-300 font-mono-numbers">
+                                    <span className="text-slate-500 mr-1 sm:hidden">@</span>
+                                    ${formatPrice(crosshairInfo.price)}
+                                </div>
+                                <div className="text-[10px] text-slate-500 hidden sm:block mt-1">
+                                    Current: ${formatPrice(currentPrice)}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
 
-                {/* Current Price Indicator */}
-                <div className="absolute bottom-4 right-4 glass glass-border rounded-lg px-3 py-2">
-                    <div className="text-xs text-slate-400">Current Price</div>
-                    <div className="font-mono-numbers text-lg font-bold text-slate-100 dark:text-slate-100">
+                {/* Current Price Indicator - Compact Bottom Right */}
+                <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 glass glass-border rounded-lg px-2 py-1 sm:px-3 sm:py-2 z-10">
+                    <div className="text-[10px] sm:text-xs text-slate-400 uppercase tracking-wider mb-0.5">Price</div>
+                    <div className="font-mono-numbers text-sm sm:text-lg font-bold text-slate-100 dark:text-slate-100 leading-none">
                         ${formatPrice(currentPrice)}
                     </div>
                 </div>
