@@ -73,52 +73,91 @@ export default function Home() {
         {/* Chart Area */}
         <div className="flex-1 glass glass-border rounded-xl overflow-hidden flex flex-col">
           {/* Toolbar */}
-          <div className="flex items-center justify-between p-4 border-b border-slate-700/50 dark:border-slate-700/50 gap-3 overflow-x-auto no-scrollbar min-h-[60px]">
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="text-sm text-slate-400 dark:text-slate-400 hidden sm:inline">Candlestick</span>
-              <span className="text-xs px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20 whitespace-nowrap">
-                LIVE
-              </span>
-              {lastUpdated && (
-                <span className="text-xs text-slate-500 hidden md:block">
-                  Updated: {lastUpdated.toLocaleTimeString()}
+          {/* Toolbar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border-b border-slate-700/50 dark:border-slate-700/50 gap-3 sm:min-h-[60px]">
+
+            {/* Top Row (Mobile): Status & Actions */}
+            <div className="flex items-center justify-between w-full sm:w-auto gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <span className="text-sm text-slate-400 dark:text-slate-400 hidden lg:inline">Candlestick</span>
+                <span className="text-[10px] sm:text-xs px-2 py-0.5 sm:py-1 bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20 whitespace-nowrap flex items-center gap-1">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  LIVE
                 </span>
-              )}
-              <button
-                onClick={handleRefresh}
-                className="p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors shrink-0"
-                title="Refresh data"
-              >
-                <RefreshCw
-                  className={`w-4 h-4 text-slate-400 ${isLoading ? "animate-spin" : ""}`}
-                />
-              </button>
+                {lastUpdated && (
+                  <span className="text-[10px] sm:text-xs text-slate-500 hidden sm:block">
+                    {lastUpdated.toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
+
+              {/* Mobile Actions Group */}
+              <div className="flex items-center gap-2 sm:hidden">
+                <button
+                  onClick={handleRefresh}
+                  className="p-1.5 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-slate-200 transition-colors"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+                </button>
+                <button
+                  onClick={() => setNewsOpen(true)}
+                  className="p-1.5 rounded-lg hover:bg-slate-700/50 text-slate-400 hover:text-slate-200"
+                >
+                  <Newspaper className="w-4 h-4" />
+                </button>
+                <ThemeToggle />
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              {/* Indicator Selector */}
-              <IndicatorSelector
-                activeIndicators={activeIndicators}
-                onToggleIndicator={handleToggleIndicator}
-              />
+            {/* Bottom Row (Mobile) / Right Side (Desktop) */}
+            <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
 
-              {/* News Button */}
-              <button
-                onClick={() => setNewsOpen(true)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 border border-slate-700/50 transition-all shrink-0"
-              >
-                <Newspaper className="w-4 h-4" />
-                <span className="hidden sm:inline">News</span>
-              </button>
+              {/* Desktop Actions (Hidden on Mobile) */}
+              <div className="hidden sm:flex items-center gap-2">
+                <button
+                  onClick={handleRefresh}
+                  className="p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors"
+                  title="Refresh data"
+                >
+                  <RefreshCw
+                    className={`w-4 h-4 text-slate-400 ${isLoading ? "animate-spin" : ""}`}
+                  />
+                </button>
+              </div>
 
-              {/* Theme Toggle */}
-              <ThemeToggle />
+              {/* Selectors Group */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                {/* Indicator Selector */}
+                <IndicatorSelector
+                  activeIndicators={activeIndicators}
+                  onToggleIndicator={handleToggleIndicator}
+                />
 
-              {/* Timeframe Selector */}
-              <TimeframeSelector
-                selectedTimeframe={timeframe}
-                onSelectTimeframe={handleSelectTimeframe}
-              />
+                {/* Desktop News Button (Hidden on Mobile) */}
+                <button
+                  onClick={() => setNewsOpen(true)}
+                  className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 border border-slate-700/50 transition-all shrink-0"
+                >
+                  <Newspaper className="w-4 h-4" />
+                  <span>News</span>
+                </button>
+
+                {/* Desktop Theme Toggle */}
+                <div className="hidden sm:block">
+                  <ThemeToggle />
+                </div>
+
+                {/* Timeframe Selector - Auto width on mobile */}
+                <div className="flex-1 sm:flex-none">
+                  <TimeframeSelector
+                    selectedTimeframe={timeframe}
+                    onSelectTimeframe={handleSelectTimeframe}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
