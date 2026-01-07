@@ -1,4 +1,4 @@
-import { Asset } from "./assets";
+import { Asset } from "@/lib/assets";
 
 export interface CandlestickData {
     time: number; // Unix timestamp in seconds

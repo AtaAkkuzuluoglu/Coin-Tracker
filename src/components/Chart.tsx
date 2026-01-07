@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useCallback, useState, useMemo } from "react";
-import { createChart, IChartApi, ColorType, CandlestickSeries, LineSeries, CrosshairMode } from "lightweight-charts";
-import { CandlestickData, formatPrice, formatChange } from "@/lib/binanceApi";
+import { createChart, IChartApi, ColorType, CandlestickSeries, LineSeries, CrosshairMode, Time } from "lightweight-charts";
+import { CandlestickData, formatPrice, formatChange } from "@/services/binanceApi";
 import { Asset } from "@/lib/assets";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import {
@@ -140,7 +140,7 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
 
         // Set candlestick data
         const formattedData = data.map((d) => ({
-            time: d.time,
+            time: d.time as Time,
             open: d.open,
             high: d.high,
             low: d.low,
@@ -159,7 +159,7 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
                     priceLineVisible: false,
                     lastValueVisible: false,
                 });
-                ma20Series.setData(indicators.ma20.map((d) => ({ time: d.time, value: d.value })));
+                ma20Series.setData(indicators.ma20.map((d) => ({ time: d.time as Time, value: d.value })));
                 indicatorSeriesRef.current.set("MA20", ma20Series);
             }
 
@@ -171,7 +171,7 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
                     priceLineVisible: false,
                     lastValueVisible: false,
                 });
-                ma50Series.setData(indicators.ma50.map((d) => ({ time: d.time, value: d.value })));
+                ma50Series.setData(indicators.ma50.map((d) => ({ time: d.time as Time, value: d.value })));
                 indicatorSeriesRef.current.set("MA50", ma50Series);
             }
 
@@ -183,7 +183,7 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
                     priceLineVisible: false,
                     lastValueVisible: false,
                 });
-                ma200Series.setData(indicators.ma200.map((d) => ({ time: d.time, value: d.value })));
+                ma200Series.setData(indicators.ma200.map((d) => ({ time: d.time as Time, value: d.value })));
                 indicatorSeriesRef.current.set("MA200", ma200Series);
             }
 
@@ -195,7 +195,7 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
                     priceLineVisible: false,
                     lastValueVisible: false,
                 });
-                ema20Series.setData(indicators.ema20.map((d) => ({ time: d.time, value: d.value })));
+                ema20Series.setData(indicators.ema20.map((d) => ({ time: d.time as Time, value: d.value })));
                 indicatorSeriesRef.current.set("EMA20", ema20Series);
             }
 
@@ -208,7 +208,7 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
                     priceLineVisible: false,
                     lastValueVisible: false,
                 });
-                bbUpperSeries.setData(indicators.bb.upper.map((d) => ({ time: d.time, value: d.value })));
+                bbUpperSeries.setData(indicators.bb.upper.map((d) => ({ time: d.time as Time, value: d.value })));
 
                 const bbMiddleSeries = chart.addSeries(LineSeries, {
                     color: indicatorColors.BB,
@@ -216,7 +216,7 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
                     priceLineVisible: false,
                     lastValueVisible: false,
                 });
-                bbMiddleSeries.setData(indicators.bb.middle.map((d) => ({ time: d.time, value: d.value })));
+                bbMiddleSeries.setData(indicators.bb.middle.map((d) => ({ time: d.time as Time, value: d.value })));
 
                 const bbLowerSeries = chart.addSeries(LineSeries, {
                     color: indicatorColors.BB,
@@ -225,7 +225,7 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
                     priceLineVisible: false,
                     lastValueVisible: false,
                 });
-                bbLowerSeries.setData(indicators.bb.lower.map((d) => ({ time: d.time, value: d.value })));
+                bbLowerSeries.setData(indicators.bb.lower.map((d) => ({ time: d.time as Time, value: d.value })));
 
                 indicatorSeriesRef.current.set("BB_upper", bbUpperSeries);
                 indicatorSeriesRef.current.set("BB_middle", bbMiddleSeries);
@@ -319,7 +319,7 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
             priceLineVisible: false,
         });
 
-        rsiSeries.setData(indicators.rsi.map((d) => ({ time: d.time, value: d.value })));
+        rsiSeries.setData(indicators.rsi.map((d) => ({ time: d.time as Time, value: d.value })));
 
         // Add overbought/oversold lines
         rsiSeries.createPriceLine({

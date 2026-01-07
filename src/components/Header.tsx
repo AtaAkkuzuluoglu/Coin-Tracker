@@ -1,7 +1,7 @@
 "use client";
 
 import { Asset } from "@/lib/assets";
-import { TickerData, formatChange, formatPrice, formatVolume } from "@/lib/binanceApi";
+import { TickerData, formatChange, formatPrice, formatVolume } from "@/services/binanceApi";
 import { Menu, TrendingDown, TrendingUp } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";

@@ -1,7 +1,7 @@
 "use client";
 
 import { Asset } from "@/lib/assets";
-import { TickerData, formatChange, formatPrice } from "@/lib/binanceApi";
+import { TickerData, formatChange, formatPrice } from "@/services/binanceApi";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -25,8 +25,8 @@ export default function AssetItem({
         <button
             onClick={onClick}
             className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 hover:bg-slate-700/50 ${isSelected
-                    ? "bg-slate-700/70 border border-slate-600/50"
-                    : "bg-transparent border border-transparent"
+                ? "bg-slate-700/70 border border-slate-600/50"
+                : "bg-transparent border border-transparent"
                 }`}
         >
             {/* Logo */}

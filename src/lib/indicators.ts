@@ -1,4 +1,4 @@
-import { CandlestickData } from "./binanceApi";
+import { CandlestickData } from "@/services/binanceApi";
 
 export interface IndicatorData {
     time: number;
