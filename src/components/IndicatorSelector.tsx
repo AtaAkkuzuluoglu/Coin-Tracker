@@ -55,7 +55,6 @@ export default function IndicatorSelector({
     }, []);
 
     return (
-    return (
         <>
             <div className="relative" ref={dropdownRef}>
                 <button
