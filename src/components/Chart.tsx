@@ -438,9 +438,29 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
                                 </span>
                             </div>
 
-                            {/* Prices */}
+                            {/* Prices and Date */}
                             <div className="flex flex-col sm:block text-right sm:text-left">
-                                <div className="text-[10px] text-slate-400 uppercase tracking-wider hidden sm:block mb-1">From Hover</div>
+                                <div className="text-[10px] text-slate-400 uppercase tracking-wider hidden sm:block mb-1">
+                                    {new Date(crosshairInfo.time * 1000).toLocaleString(undefined, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: false
+                                    })}
+                                </div>
+
+                                {/* Mobile Date (shown below/next to price) */}
+                                <div className="sm:hidden text-[10px] text-slate-500 mb-0.5">
+                                    {new Date(crosshairInfo.time * 1000).toLocaleString(undefined, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: false
+                                    })}
+                                </div>
+
                                 <div className="text-xs sm:text-sm text-slate-300 font-mono-numbers">
                                     <span className="text-slate-500 mr-1 sm:hidden">@</span>
                                     ${formatPrice(crosshairInfo.price)}
