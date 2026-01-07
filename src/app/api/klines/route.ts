@@ -54,7 +54,24 @@ export async function GET(request: NextRequest) {
         }
     }
 
-    console.warn("Binance endpoints failed for klines, falling back to CoinGecko");
+    // Fallback: Hyperliquid
+    // If Binance fails, try Hyperliquid (good for ONDO, HYPE, wrappers)
+    try {
+        const asset = assets.find(a => a.symbol === symbol);
+        // Use ticker (e.g. "ONDO") not symbol ("ONDOUSDT") for HL
+        const hlCoin = asset ? asset.ticker : symbol?.replace(/USDT$|USD$/, "");
+
+        if (hlCoin) {
+            const hlData = await fetchHyperliquidKlines(hlCoin, interval, limit);
+            if (hlData && hlData.length > 0) {
+                return NextResponse.json(hlData);
+            }
+        }
+    } catch (e) {
+        console.error("Hyperliquid fallback failed:", e);
+    }
+
+    console.warn("Binance and Hyperliquid endpoints failed, falling back to CoinGecko");
 
     // Fallback: CoinGecko OHLC
     // Map symbol to CG ID
@@ -110,5 +127,66 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         console.error("CoinGecko klines fallback failed:", error);
         return NextResponse.json([]);
+    }
+}
+
+async function fetchHyperliquidKlines(coin: string, interval: string, limit: string | null) {
+    // Map Binance interval to Hyperliquid
+    // HL supports: 1m, 5m, 15m, 30m, 1h, 2h, 4h, 8h, 12h, 1d
+    let hlInterval = interval;
+    if (interval === "1w" || interval === "1M") hlInterval = "1d"; // HL max is 1d usually
+
+    // Calculate startTime based on limit if needed, 
+    // but proper way is usually just requesting latest.
+    // HL returns snapshot of recent candles.
+
+    try {
+        const response = await fetch("https://api.hyperliquid.xyz/info", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                type: "candleSnapshot",
+                req: {
+                    coin: coin,
+                    interval: hlInterval,
+                    startTime: 0 // 0 means latest N candles usually, or we can calculate
+                }
+            }),
+            next: { revalidate: 10 }
+        });
+
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        if (!Array.isArray(data)) return null;
+
+        // Limit the results if needed (Binance default is 500, we might get more or less)
+        let results = data;
+        if (limit) {
+            const limitNum = parseInt(limit);
+            if (results.length > limitNum) {
+                results = results.slice(results.length - limitNum);
+            }
+        }
+
+        // Transform to Binance format
+        // HL: { t: 1710000000000, o: "1.0", h: "1.1", l: "0.9", c: "1.05", v: "1000", ... }
+        return results.map((c: any) => [
+            c.t,                // Open time
+            c.o,                // Open
+            c.h,                // High
+            c.l,                // Low
+            c.c,                // Close
+            c.v,                // Volume
+            c.T || c.t + 60000, // Close time (T might exist, else approx)
+            "0",                // Quote Asset Vol
+            c.n || 0,           // Trades
+            "0",                // Taker buy base
+            "0",                // Taker buy quote
+            "0"                 // Ignore
+        ]);
+    } catch (e) {
+        console.error("Error fetching HL klines:", e);
+        return null;
     }
 }
