@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Asset } from "@/lib/assets";
 import {
     Newspaper,
@@ -43,7 +43,7 @@ export default function NewsPanel({ asset, isOpen, onClose }: NewsPanelProps) {
     const [selectedArticle, setSelectedArticle] = useState<NewsItem | null>(null);
     const [expandedId, setExpandedId] = useState<string | null>(null);
 
-    const fetchNews = async () => {
+    const fetchNews = useCallback(async () => {
         setLoading(true);
         try {
             const filterParam = filter === "asset" ? asset.ticker : "";
@@ -55,7 +55,7 @@ export default function NewsPanel({ asset, isOpen, onClose }: NewsPanelProps) {
             setNews([]);
         }
         setLoading(false);
-    };
+    }, [asset.ticker, filter]);
 
     useEffect(() => {
         if (isOpen) {
@@ -63,7 +63,7 @@ export default function NewsPanel({ asset, isOpen, onClose }: NewsPanelProps) {
             setSelectedArticle(null);
             setExpandedId(null);
         }
-    }, [isOpen, filter, asset.ticker]);
+    }, [isOpen, fetchNews]);
 
     const formatTimeAgo = (dateString: string) => {
         const date = new Date(dateString);

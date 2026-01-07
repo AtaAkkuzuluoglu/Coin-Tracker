@@ -130,6 +130,17 @@ export async function GET(request: NextRequest) {
     }
 }
 
+interface HyperliquidCandle {
+    t: number;  // time
+    o: string;  // open
+    h: string;  // high
+    l: string;  // low
+    c: string;  // close
+    v: string;  // volume
+    n?: number; // active_buy_volume (or trades count in some contexts)
+    T?: number; // close time
+}
+
 async function fetchHyperliquidKlines(coin: string, interval: string, limit: string | null) {
     // Map Binance interval to Hyperliquid
     // HL supports: 1m, 5m, 15m, 30m, 1h, 2h, 4h, 8h, 12h, 1d
@@ -171,7 +182,7 @@ async function fetchHyperliquidKlines(coin: string, interval: string, limit: str
 
         // Transform to Binance format
         // HL: { t: 1710000000000, o: "1.0", h: "1.1", l: "0.9", c: "1.05", v: "1000", ... }
-        return results.map((c: any) => [
+        return results.map((c: HyperliquidCandle) => [
             c.t,                // Open time
             c.o,                // Open
             c.h,                // High

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const HYPERLIQUID_API = "https://api.hyperliquid.xyz/info";
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
     try {
         // Fetch spot metadata to get HYPE token info
         const metaResponse = await fetch(HYPERLIQUID_API, {

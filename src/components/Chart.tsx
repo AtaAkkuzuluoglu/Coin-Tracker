@@ -370,13 +370,14 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
 
     useEffect(() => {
         const cleanup = initChart();
+        const indicatorSeries = indicatorSeriesRef.current;
         return () => {
             cleanup?.();
             if (chartRef.current) {
                 chartRef.current.remove();
                 chartRef.current = null;
                 seriesRef.current = null;
-                indicatorSeriesRef.current.clear();
+                indicatorSeries.clear();
             }
         };
     }, [initChart]);
@@ -385,7 +386,7 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
 
     // Get active indicator labels for legend
     const activeIndicatorLabels = Object.entries(activeIndicators)
-        .filter(([_, isActive]) => isActive)
+        .filter(([, isActive]) => isActive)
         .map(([key]) => key);
 
     return (
