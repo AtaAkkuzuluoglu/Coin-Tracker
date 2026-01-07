@@ -137,54 +137,37 @@ export async function fetchAllTickers(
     const binanceAssets = assetList.filter((a) => a.source === "binance");
     const hyperliquidAssets = assetList.filter((a) => a.source === "hyperliquid");
 
-    // Fetch Binance tickers
-    if (binanceAssets.length > 0) {
+    // Unified Hyperliquid Fetch (All assets are now on HL)
+    // Legacy Binance fetch is removed to prevent fallback issues.
+    // console.log(`Fetching tickers for ${hyperliquidAssets.length} assets from Hyperliquid`);
+
+    // Fetch Hyperliquid tickers (Single bulk fetch)
+    // Now that all assets are on Hyperliquid, we fetch once and map
+    if (hyperliquidAssets.length > 0) {
         try {
-            const symbols = binanceAssets.map((a) => a.symbol);
-            const response = await fetch(
-                `/api/tickers?symbols=${JSON.stringify(symbols)}`
-            );
+            const response = await fetch("/api/hyperliquid");
 
             if (response.ok) {
                 const data = await response.json();
-
                 if (Array.isArray(data)) {
+                    // data is array of { symbol, price, ... }
                     for (const ticker of data) {
-                        const asset = binanceAssets.find((a) => a.symbol === ticker.symbol);
+                        // Find matching asset by ticker (e.g. "BTC" === "BTC")
+                        // Our assets have ticker "BTC", "ETH", etc.
+                        const asset = hyperliquidAssets.find(a => a.ticker === ticker.symbol);
                         if (asset) {
                             tickerMap.set(asset.id, {
-                                price: parseFloat(ticker.lastPrice),
-                                priceChange: parseFloat(ticker.priceChange),
-                                priceChangePercent: parseFloat(ticker.priceChangePercent),
-                                volume: parseFloat(ticker.quoteVolume),
+                                price: ticker.price || 0,
+                                priceChange: ticker.priceChange24h || 0,
+                                priceChangePercent: ticker.priceChangePercent || 0,
+                                volume: ticker.volume24h || 0,
                             });
                         }
                     }
                 }
             }
         } catch (error) {
-            console.error("Failed to fetch Binance tickers:", error);
-        }
-    }
-
-    // Fetch Hyperliquid tickers
-    for (const asset of hyperliquidAssets) {
-        try {
-            const response = await fetch("/api/hyperliquid");
-
-            if (response.ok) {
-                const data = await response.json();
-                if (!data.error) {
-                    tickerMap.set(asset.id, {
-                        price: data.price || 0,
-                        priceChange: data.priceChange24h || 0,
-                        priceChangePercent: data.priceChangePercent || 0,
-                        volume: data.volume24h || 0,
-                    });
-                }
-            }
-        } catch (error) {
-            console.error(`Failed to fetch Hyperliquid ticker for ${asset.ticker}:`, error);
+            console.error("Failed to fetch Hyperliquid tickers:", error);
         }
     }
 
