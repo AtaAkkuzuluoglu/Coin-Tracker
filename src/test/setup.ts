@@ -13,8 +13,9 @@ vi.mock('next/navigation', () => ({
 }));
 
 // Mock next/image - avoid JSX, use createElement instead
-vi.mock('next/image', () => {
-    const React = require('react');
+ 
+vi.mock('next/image', async () => {
+    const React = await import('react');
     return {
         default: function MockImage(props: Record<string, unknown>) {
             return React.createElement('img', props);

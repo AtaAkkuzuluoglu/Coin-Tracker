@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 export interface NewsItem {
     id: string;
@@ -29,6 +29,7 @@ interface UseNewsReturn {
 export function useNews(filter: string = "", enabled: boolean = true): UseNewsReturn {
     const [news, setNews] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(false);
+    const isMountedRef = useRef(true);
 
     const fetchNews = useCallback(async () => {
         if (!enabled) return;
@@ -37,18 +38,28 @@ export function useNews(filter: string = "", enabled: boolean = true): UseNewsRe
         try {
             const response = await fetch(`/api/news?filter=${filter}`);
             const data = await response.json();
-            setNews(data.news || []);
+            if (isMountedRef.current) {
+                setNews(data.news || []);
+            }
         } catch (error) {
             console.error("Failed to fetch news:", error);
-            setNews([]);
+            if (isMountedRef.current) {
+                setNews([]);
+            }
         }
-        setLoading(false);
+        if (isMountedRef.current) {
+            setLoading(false);
+        }
     }, [filter, enabled]);
 
     useEffect(() => {
+        isMountedRef.current = true;
         if (enabled) {
-            fetchNews();
+            void fetchNews();
         }
+        return () => {
+            isMountedRef.current = false;
+        };
     }, [fetchNews, enabled]);
 
     return { news, loading, refetch: fetchNews };

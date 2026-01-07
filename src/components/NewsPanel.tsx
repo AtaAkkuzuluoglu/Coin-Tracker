@@ -238,8 +238,8 @@ export default function NewsPanel({ asset, isOpen, onClose }: NewsPanelProps) {
                             <button
                                 onClick={() => setFilter("all")}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === "all"
-                                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 border border-transparent"
+                                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 border border-transparent"
                                     }`}
                             >
                                 All News
@@ -247,8 +247,8 @@ export default function NewsPanel({ asset, isOpen, onClose }: NewsPanelProps) {
                             <button
                                 onClick={() => setFilter("asset")}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === "asset"
-                                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 border border-transparent"
+                                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 border border-transparent"
                                     }`}
                             >
                                 {asset.ticker} Only
@@ -266,7 +266,7 @@ export default function NewsPanel({ asset, isOpen, onClose }: NewsPanelProps) {
                                 <div className="flex flex-col items-center justify-center h-full gap-3">
                                     <Newspaper className="w-8 h-8 text-slate-500" />
                                     <span className="text-slate-400">No news found</span>
-                                    <span className="text-xs text-slate-500">Try selecting "All News"</span>
+                                    <span className="text-xs text-slate-500">Try selecting &quot;All News&quot;</span>
                                 </div>
                             ) : (
                                 <div className="space-y-3">

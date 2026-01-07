@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Asset } from "@/lib/assets";
 import {
     CandlestickData,
@@ -28,51 +28,58 @@ export function useChartData(
     const [chartData, setChartData] = useState<CandlestickData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const isMountedRef = useRef(true);
 
     const fetchChart = useCallback(async (targetAsset: Asset, targetTimeframe: Timeframe) => {
+        if (!isMountedRef.current) return;
         setIsLoading(true);
         setChartData([]); // Clear previous data to avoid stale display
         const data = await fetchCandlestickData(targetAsset, targetTimeframe);
-        setChartData(data);
-        setIsLoading(false);
-        setLastUpdated(new Date());
+        if (isMountedRef.current) {
+            setChartData(data);
+            setIsLoading(false);
+            setLastUpdated(new Date());
+        }
     }, []);
 
     // Fetch chart when asset or timeframe changes
     useEffect(() => {
+        isMountedRef.current = true;
         let isCancelled = false;
 
         const loadChart = async () => {
+            if (!isMountedRef.current) return;
             setIsLoading(true);
             setChartData([]); // Clear previous data immediately
             const data = await fetchCandlestickData(asset, timeframe);
 
             // Only update state if this effect hasn't been cancelled
-            if (!isCancelled) {
+            if (!isCancelled && isMountedRef.current) {
                 setChartData(data);
                 setIsLoading(false);
                 setLastUpdated(new Date());
             }
         };
 
-        loadChart();
+        void loadChart();
 
         return () => {
             isCancelled = true; // Cancel if asset/timeframe changes before fetch completes
+            isMountedRef.current = false;
         };
     }, [asset, timeframe]);
 
     // Auto-refresh interval
     useEffect(() => {
         const interval = setInterval(() => {
-            fetchChart(asset, timeframe);
+            void fetchChart(asset, timeframe);
         }, 30000);
 
         return () => clearInterval(interval);
     }, [fetchChart, asset, timeframe]);
 
     const refetch = useCallback(() => {
-        fetchChart(asset, timeframe);
+        void fetchChart(asset, timeframe);
     }, [fetchChart, asset, timeframe]);
 
     return { chartData, isLoading, lastUpdated, refetch };
