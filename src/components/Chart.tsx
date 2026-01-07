@@ -387,7 +387,7 @@ export default function Chart({ data, asset, activeIndicators }: ChartProps) {
         <div className="relative w-full h-full flex flex-col">
             {/* Main Chart */}
             <div className={`relative flex-1 min-h-[300px] ${activeIndicators.RSI ? "" : ""}`}>
-                <div ref={chartContainerRef} className="absolute inset-0" />
+                <div ref={chartContainerRef} className="absolute inset-0 touch-none" />
 
                 {/* Watermark - Hide on mobile if crosshair active to save space */}
                 <div className={`absolute top-4 left-4 pointer-events-none transition-opacity duration-300 ${crosshairInfo ? "opacity-0 sm:opacity-100" : "opacity-100"}`}>
